@@ -154,6 +154,22 @@ O simplemente reinstalá Python marcando "Add Python to PATH" durante la instala
 - Si tu exportación usa otro formato (24h vs 12h, otro separador), ajustá
   la regex en `parser.py`.
 
+### Configuración de Streamlit (privacidad)
+
+La primera vez que ejecutes `streamlit run app.py`, peut pedir tu email. Esto es **opcional** — dejá el campo en blanco si no querés recibir newsletters.
+
+Streamlit recopila estadísticas de uso anónimas por defecto. Para desactivar:
+
+1. Creá el archivo `%USERPROFILE%\.streamlit\config.toml`
+2. Agregá este contenido:
+
+```toml
+[browser]
+gatherUsageStats = false
+```
+
+Esto previene que se muestren las solicitudes de email en el futuro.
+
 ---
 
 ## Estructura del proyecto
