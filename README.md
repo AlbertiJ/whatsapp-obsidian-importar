@@ -117,10 +117,31 @@ WhatsApp exporta en formato:
 
 ## Solución de problemas
 
-### "Error al extraer: Format not supported"
+### "streamlit no se reconoce como comando"
 
-- Asegurate de tener 7-Zip instalado y en el PATH.
-- Verificá con: `7z --version` en la terminal.
+Si aparece este error después de instalar:
+```
+"streamlit" no se reconoce como un comando interno o externo...
+```
+
+Significa que pip instaló los scripts en una carpeta que no está en tu PATH. Solución rápida:
+
+```powershell
+# Opción 1: Ejecutar con la ruta completa
+& "$env:APPDATA\Python\Python<VERSION>\Scripts\streamlit.exe" run app.py
+
+# Opción 2: Agregar Scripts al PATH (temporal para esta sesión)
+$env:PATH += ";$env:APPDATA\Python\Python<VERSION>\Scripts"
+streamlit run app.py
+```
+
+Reemplazá `<VERSION>` con tu versión de Python (ej: `Python312`, `Python314`).
+
+**Opción 3 (permanente):** Agregá la carpeta al PATH del sistema:
+1. Panel de Control → Sistema → Variables de entorno → PATH → Editar
+2. Agregá: `%APPDATA%\Python\Python<VERSION>\Scripts`
+
+O simplemente reinstalá Python marcando "Add Python to PATH" durante la instalación.
 
 ### "No se encontraron archivos .txt"
 
