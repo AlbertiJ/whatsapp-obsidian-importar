@@ -46,23 +46,51 @@ def safe_copy(src: str, dst: str) -> bool:
         return False
 
 
+def check_7z_installed() -> bool:
+    """Check if 7-Zip is installed and in PATH."""
+    try:
+        result = subprocess.run(
+            ["7z", "--help"], 
+            capture_output=True, 
+            text=True,
+            timeout=5
+        )
+        return result.returncode in (0, 1)  # 0 = help shown, 1 = no files specified
+    except FileNotFoundError:
+        return False
+    except Exception:
+        return False
+
+
 def extract_archive(archive_path: str, dest_dir: str) -> str:
     """Auto-detect format and extract using 7z command line tool."""
     ext = Path(archive_path).suffix.lower()
     
+    # First check if 7z is available
+    if not check_7z_installed():
+        raise RuntimeError(
+            "❌ 7-Zip no encontrado.\n\n"
+            "Esta app necesita 7-Zip para extraer archivos RAR/ZIP.\n\n"
+            "📥 Instalalo gratis desde: https://www.7-zip.org/\n"
+            "Después de instalar, cerrá y reabrí la terminal (PowerShell) para que se actualice el PATH."
+        )
+    
     # Build 7z command (works for both RAR and ZIP)
     cmd = ["7z", "x", "-y", f"-o{dest_dir}", archive_path]
     
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    
-    if result.returncode != 0:
-        # Check if 7z is not found
-        if "not recognized" in result.stderr.lower() or result.returncode == 127:
-            raise RuntimeError(
-                "7-Zip no encontrado. Asegurate de tener 7-Zip instalado y en el PATH. "
-                "Descargalo de: https://www.7-zip.org/"
-            )
-        raise RuntimeError(f"Error al extraer: {result.stderr}")
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() if result.stderr else "Error desconocido"
+            raise RuntimeError(f"Error al extraer con 7z:\n{error_msg}")
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("❌ La extracción tardó demasiado. ¿El archivo es muy grande?")
+    except FileNotFoundError:
+        raise RuntimeError(
+            "❌ 7z.exe no encontrado.\n"
+            "Verificá que 7-Zip esté instalado y en el PATH del sistema."
+        )
     
     return dest_dir
 
@@ -169,6 +197,17 @@ def main():
 
     # ── Step 2: Upload ────────────────────────────────────────────────────────
     st.markdown("### 📦 Subir archivo")
+    
+    # Pre-check: verify 7z is available
+    if not check_7z_installed():
+        st.error(
+            "⚠️ **7-Zip no instalado**\n\n"
+            "Esta app necesita 7-Zip para extraer archivos RAR/ZIP.\n\n"
+            "📥 [Descargalo de 7-zip.org](https://www.7-zip.org/) e instalalo.\n"
+            "Después de instalar, **cerrá y reabrí esta terminal** y volvé a ejecutar `streamlit run app.py`."
+        )
+        st.stop()
+    
     uploaded_file = st.file_uploader(
         "Arrastrá o seleccioná un archivo RAR / ZIP",
         type=["rar", "zip"],
